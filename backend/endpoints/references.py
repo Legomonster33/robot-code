@@ -159,13 +159,16 @@ def push_version_recursive(**kwargs):
     name = connect.get_body("name")
     description = connect.get_body_optional("description", "")
 
-    def get_linked_parents(db, instance):
+    def get_linked_parents(db, instance, mock_db):
+        if instance in mock_db:
+            return mock_db[instance]
         document_db_id = path_to_db_id(instance)
         doc = db.linked_documents.document(document_db_id).get()
         linked_parents = []
         if doc.exists and (data := doc.to_dict()):
             for document_db_id in data.get(LinkType.PARENTS, []):
                 linked_parents.append(db_id_to_path(document_db_id))
+        mock_db[instance] = linked_parents
 
         return linked_parents
 
@@ -178,11 +181,13 @@ def push_version_recursive(**kwargs):
 
     curr_parents = []
 
+    mock_db = dict()
+
     while route:
         print(f"Route: {route}")
         print(f"Unvisited Nodes: {unvisited_nodes}")
 
-        curr_parents = get_linked_parents(db, route[-1])
+        curr_parents = get_linked_parents(db, route[-1], mock_db)
 
         for parent in sorted_list:
             if parent in curr_parents:
@@ -212,6 +217,10 @@ def push_version_recursive(**kwargs):
             log_file.write(f"{documents.get_document(api, node)['name']}\n")
         log_file.write("sorted_list end\n\n")
 
+        log_file.write("mock_db begin\n")
+        log_file.write(str(mock_db))
+        log_file.write("\nmock_db end\n\n")
+
     for instance in sorted_list:
         require_permissions(api, instance, Permission.WRITE, Permission.LINK)
 
@@ -224,11 +233,5 @@ def push_version_recursive(**kwargs):
             api, update_instance, [doc.document_id for doc in sorted_list]
         )
         versions.create_version(api, update_instance, name, description)
-
-    with open("backend/endpoints/logfile.txt", "a") as log_file:
-
-        log_file.write("updated_references begin\n")
-        log_file.write(f"{updated_references}\n")
-        log_file.write("updated_references end\n\n")
 
     return {"updatedReferences": updated_references}
