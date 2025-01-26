@@ -217,10 +217,6 @@ def push_version_recursive(**kwargs):
             log_file.write(f"{documents.get_document(api, node)['name']}\n")
         log_file.write("sorted_list end\n\n")
 
-        log_file.write("mock_db begin\n")
-        log_file.write(str(mock_db))
-        log_file.write("\nmock_db end\n\n")
-
     for instance in sorted_list:
         require_permissions(api, instance, Permission.WRITE, Permission.LINK)
 
