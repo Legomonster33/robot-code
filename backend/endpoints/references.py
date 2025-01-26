@@ -169,7 +169,7 @@ def push_version_recursive(**kwargs):
 
         return linked_parents
 
-    unvisited_nodes = []
+unvisited_nodes = []
 
     sorted_list = []
 
@@ -178,11 +178,13 @@ def push_version_recursive(**kwargs):
 
     curr_parents = []
 
+    mock_db = dict()
+
     while route:
         print(f"Route: {route}")
         print(f"Unvisited Nodes: {unvisited_nodes}")
 
-        curr_parents = get_linked_parents(db, route[-1])
+        curr_parents = get_linked_parents(db, route[-1], mock_db)
 
         for parent in sorted_list:
             if parent in curr_parents:
@@ -211,6 +213,10 @@ def push_version_recursive(**kwargs):
         for node in sorted_list:
             log_file.write(f"{documents.get_document(api, node)['name']}\n")
         log_file.write("sorted_list end\n\n")
+
+        log_file.write("mock_db begin\n")
+        log_file.write(str(mock_db))
+        log_file.write("\nmock_db end\n\n")
 
     for instance in sorted_list:
         require_permissions(api, instance, Permission.WRITE, Permission.LINK)
